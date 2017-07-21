@@ -86,9 +86,11 @@ if __name__ == '__main__':
     parser.add_argument('--words', type=int, default=2, help='number of words in a sentence')
     parser.add_argument('--sentences', type=int, default=10, help='number of sentences in a line')
     parser.add_argument('--close', type=bool, default=True, help='close the browser at the end of the procedure')
+    parser.add_argument('--web_server', type=bool, default=False, help='start the web server automatically')
     parser.add_argument('--skip_line', type=int, default=2, help='how many lines before skipping one line')
     parser.add_argument('--skip_lines', type=int, default=2, help='how many lines to skip')
     parser.add_argument('--cuts', type=int, default=2, help='how many images from the same screenshot')
     FLAGS, unparsed = parser.parse_known_args()
-    # start_server(FLAGS.port)
+    if FLAGS.web_server:
+        start_server(FLAGS.port)
     generate_training(FLAGS)

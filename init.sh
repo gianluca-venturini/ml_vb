@@ -4,6 +4,7 @@ virtualenv .
 source ./bin/activate
 pip install tensorflow
 pip install selenium
+pip install Pillow
 # Download geckodriver for Mac
 curl -L https://github.com/mozilla/geckodriver/releases/download/v0.18.0/geckodriver-v0.18.0-macos.tar.gz | tar xz -C bin
 # Download Firefox for Mac
