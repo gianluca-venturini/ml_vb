@@ -9,6 +9,8 @@ Assuming that you already have:
 
 In order to test the training set generator
 ```
+# Activate the virtualenv
+source bin/activate
 python generate_images.py --web_server=True
 ```
 
