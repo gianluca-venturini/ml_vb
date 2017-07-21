@@ -1,0 +1,30 @@
+{
+  "name": "image_generator",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "@types/jquery": "^3.2.6",
+    "@types/query-string": "^4.3.1",
+    "@types/react": "^15.0.37",
+    "@types/react-dom": "^15.5.1",
+    "@types/seedrandom": "^2.4.27",
+    "browserify": "^14.4.0",
+    "debowerify": "^1.5.0",
+    "gulp": "^3.9.1",
+    "gulp-typescript": "^3.2.0",
+    "jquery": "^3.2.1",
+    "query-string": "^4.3.4",
+    "react": "^15.6.1",
+    "react-dom": "^15.6.1",
+    "seedrandom": "^2.4.3",
+    "tsify": "^3.0.1",
+    "typescript": "^2.4.1",
+    "vinyl-source-stream": "^1.1.0"
+  }
+}
