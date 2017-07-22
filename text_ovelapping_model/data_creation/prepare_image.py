@@ -5,7 +5,7 @@ from PIL import ImageChops
 import os
 import glob
 
-from text_ovelapping_model.params import window_size, step_size
+from text_ovelapping_model.params import WINDOW_SIZE, STEP_SIZE
 
 sort = ['good100']
 path = '../../../../ran/Documents/ML_bad_lf/overlap/'
@@ -18,9 +18,9 @@ def crop(p_name,s):
         img = Image.open(path + s + '/' + p_name)
         n, m = img.size
         print n,m,p_name,
-        for i, j in itertools.product(range(0, n-window_size, step_size), range(0, m-window_size, step_size)):
+        for i, j in itertools.product(range(0, n-WINDOW_SIZE, STEP_SIZE), range(0, m-WINDOW_SIZE, STEP_SIZE)):
             print '.',
-            cropped_img = img.crop((i, j, i+window_size, j+window_size))
+            cropped_img = img.crop((i, j, i+WINDOW_SIZE, j+WINDOW_SIZE))
             if ImageChops.invert(cropped_img).getbbox():
                 cropped_img.save(path + 'cropped-' + s + '/' + p_name + '-' + str(i) + '-' + str(j) + '.png')
         print '\n'

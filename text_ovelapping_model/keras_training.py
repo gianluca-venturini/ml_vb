@@ -9,23 +9,24 @@ from keras.layers import Dense
 from keras.models import Sequential
 import pickle
 
-from text_ovelapping_model.params import path, window_size, scaler_path
-from text_ovelapping_model.params import size, keras_model_path
+from params import (
+    TRAINING_PATH,
+    WINDOW_SIZE,
+    SCALER_PATH,
+    KERAS_MODEL_PATH,
+    SORT,
+)
 
-
-step_seze = 20
-sort = ['cropped-good100', 'cropped-white']
-ratio = 5
-size = 41041
-sample_size = [5587, 1475]
-input = window_size * window_size
+size = 0
+sample_size = [100, 100]
+input = WINDOW_SIZE * WINDOW_SIZE
 
 from sklearn.preprocessing import StandardScaler
 
 def preprocess_data(X_user_train,  X_test):
     print X_user_train
-    scaler = StandardScaler().fit(X_user_train )
-    with open(scaler_path+ sort[1], "wb") as f:
+    scaler = StandardScaler().fit(X_user_train)
+    with open(SCALER_PATH + SORT[1] + '.pickle', "wb") as f:
         pickle.dump(scaler, f)
 
     return  scaler.transform(X_user_train).tolist(),  scaler.transform(X_test).tolist()
@@ -36,14 +37,14 @@ def add_pcs(dedup=True):
     s = set()
     for i in [0, 1]:
         print sample_size[i]
-        print len(os.listdir(path + sort[i]))
-        print sort[i]
-        listing = random.sample(os.listdir(path + sort[i]), sample_size[i])
+        print len(os.listdir(TRAINING_PATH + SORT[i]))
+        print SORT[i]
+        listing = random.sample(os.listdir(TRAINING_PATH + SORT[i]), sample_size[i])
         for photo in listing:
             if photo == ".DS_Store":
                 continue
             try:
-                img = Image.open(path + sort[i] + '/' + photo).convert('L')
+                img = Image.open(TRAINING_PATH + SORT[i] + '/' + photo).convert('L')
                 arr = np.array(img).ravel()
                 if dedup:
                     if hash(str(arr)) in s:
@@ -134,7 +135,7 @@ def train(j,k, epochs=50):
 
 train(25,10,epochs=15)
 
-model.save(keras_model_path+sort[1]+".h5")
+model.save(KERAS_MODEL_PATH + SORT[1] + ".h5")
 
 print 'Accuracy is: ' + str(ACC) + ' True Positive Rate: ' + str(
         TPR) + ' True Negative Rate: ' + str(TNR)  + " "+ str(_j) + " k: " +str(_k)

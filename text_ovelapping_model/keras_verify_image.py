@@ -10,24 +10,23 @@ import pickle
 # first remove bacground than attach model detectors per image size
 # each model use its color to mark detected bugs
 
-from text_ovelapping_model.params import window_size, step_size, keras_model_path, scaler_path, big_scaler_path, sort
+from params import WINDOW_SIZE, STEP_SIZE, KERAS_MODEL_PATH, SCALER_PATH, BIG_SCALER_PATH, SORT
 
-path_photo = '../../../../ran/Documents/ML_bad_lf/overlap/test'
+path_photo = '../test'
 
 
 # load models
-background_model = load_model(keras_model_path + sort[1] + ".h5")
-with open(scaler_path + sort[1], "rb") as f:
+background_model = load_model(KERAS_MODEL_PATH + SORT[1] + ".h5")
+with open(SCALER_PATH + SORT[1] + '.pickle', "rb") as f:
     background_scaler = pickle.load(f)
-model_name = "cropped-10"
-with open(scaler_path + model_name, "rb") as f:
-    scaler_10 = pickle.load(f)
-model_10 = load_model(keras_model_path + model_name + ".h5")
+with open(SCALER_PATH + SORT[1] + '.pickle', "rb") as f:
+    scaler = pickle.load(f)
+model = load_model(KERAS_MODEL_PATH + SORT[1] + ".h5")
 
 
 def get_models(window_size):
     if window_size == 100:
-        return (scaler_10, model_10, 10, 5, 0.005, 15)
+        return (scaler, model, 10, 5, 0.005, 15)
 
 
 def check_image(img, pixels,
@@ -78,7 +77,7 @@ for photo in listing:
         img = Image.open(path_photo + '/' + photo)
         img_new = img.copy()
         pixels = img_new.load()
-        check_image(img, pixels, background_scaler, background_model, window_size, step_size, 0, 0)
+        check_image(img, pixels, scaler, background_model, WINDOW_SIZE, STEP_SIZE, 0, 0)
         img_new.show()
         img_new.save(path_photo + "/res/" + photo + "_t_" + '.png')
     except Exception as e:

@@ -5,6 +5,11 @@ source ./bin/activate
 pip install tensorflow
 pip install selenium
 pip install Pillow
+pip install numpy
+pip install sklearn
+pip install scipy
+pip install keras
+pip install h5py
 # Download geckodriver for Mac
 curl -L https://github.com/mozilla/geckodriver/releases/download/v0.18.0/geckodriver-v0.18.0-macos.tar.gz | tar xz -C bin
 # Download Firefox for Mac

@@ -28,3 +28,15 @@ gulp
 ```
 if you use any other dependency remember to `npm install <dependency> --save-dev`
 
+# Train the model
+```
+cd text_ovelapping_model
+python keras_training.py
+```
+The model will be saved in *keras_model* directory
+
+# Test the results on a real image
+```
+cd text_ovelapping_model
+python keras_verify_image.py
+```

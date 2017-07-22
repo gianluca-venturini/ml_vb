@@ -22,3 +22,9 @@ pip-selfcheck.json
 
 # Mac
 .DS_Store
+
+#Python
+*.pyc
+
+#IDE
+.vscode
