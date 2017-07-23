@@ -8,67 +8,72 @@ from sklearn.metrics import confusion_matrix
 from keras.layers import Dense
 from keras.models import Sequential
 import pickle
+from sklearn.preprocessing import StandardScaler
 
 from params import (
     TRAINING_PATH,
-    WINDOW_SIZE,
-    SCALER_PATH,
+    SAMPLE_SIZE,
+    SCALER_TRAINING_FILE,
     KERAS_MODEL_PATH,
-    SORT,
+    TRAINING_DATASET,
+    SAMPLE_SIZE,
 )
 
 size = 0
-sample_size = [100, 100]
-input = WINDOW_SIZE * WINDOW_SIZE
+INPUT_SIZE = SAMPLE_SIZE * SAMPLE_SIZE
 
-from sklearn.preprocessing import StandardScaler
+def get_scaler(data_train):
+    scaler = StandardScaler().fit(data_train)
+    return scaler
 
-def preprocess_data(X_user_train,  X_test):
-    print X_user_train
-    scaler = StandardScaler().fit(X_user_train)
-    with open(SCALER_PATH + SORT[1] + '.pickle', "wb") as f:
+def save_scaler(scaler):
+    with open(SCALER_TRAINING_FILE, "wb") as f:
         pickle.dump(scaler, f)
 
-    return  scaler.transform(X_user_train).tolist(),  scaler.transform(X_test).tolist()
+
+def scale_data(non_scaled_data, scaler):
+    print non_scaled_data
+
+    return  scaler.transform(non_scaled_data).tolist()
 
 # preparing photo windows from given photos
 def add_pcs(dedup=True):
-    a = list()
-    s = set()
-    for i in [0, 1]:
-        print sample_size[i]
-        print len(os.listdir(TRAINING_PATH + SORT[i]))
-        print SORT[i]
-        listing = random.sample(os.listdir(TRAINING_PATH + SORT[i]), sample_size[i])
+    images_and_labels = list()
+    processed_image_hashes = set()
+    for label in [0, 1]:
+        print SAMPLE_SIZE[label]
+        print len(os.listdir(TRAINING_PATH + TRAINING_DATASET[label]))
+        print TRAINING_DATASET[label]
+        listing = random.sample(os.listdir(TRAINING_PATH + TRAINING_DATASET[label]), SAMPLE_SIZE[label])
         for photo in listing:
             if photo == ".DS_Store":
                 continue
             try:
-                img = Image.open(TRAINING_PATH + SORT[i] + '/' + photo).convert('L')
-                arr = np.array(img).ravel()
+                img = Image.open(TRAINING_PATH + TRAINING_DATASET[label] + '/' + photo).convert('L')
+                img_arr = np.array(img).ravel()
                 if dedup:
-                    if hash(str(arr)) in s:
+                    if hash(str(img_arr)) in processed_image_hashes:
                         continue
 
-                    s.add(hash(str(arr)))
-                a.append([arr, i])
+                    processed_image_hashes.add(hash(str(img_arr)))
+                images_and_labels.append([img_arr, label])
             except Exception as e:
                 pass
-    return a
+    return images_and_labels
 
 
-x_y = add_pcs(dedup=False)
-print len(x_y)
+images_and_labels = add_pcs(dedup=False)
+print len(images_and_labels)
 print "=============================="
 numpy.random.seed()
 
 
-def random_split():
-    global size, x, d, l
-    random.shuffle(x_y)
-    size = len(x_y)
-    d = [x[0] for x in x_y]
-    l = [x[1] for x in x_y]
+def random_split(images_and_labels):
+    random.shuffle(images_and_labels)
+    size = len(images_and_labels)
+    data = [x[0] for x in images_and_labels]
+    label = [x[1] for x in images_and_labels]
+    return (data, label, size)
 
 
 
@@ -110,15 +115,17 @@ _j=0
 # ACC, TPR, TNR =[]
 
 def train(j,k, epochs=50):
-    global model, x, ACC, TPR, TNR
-    random_split()
-    data = np.array(d[:int(size * 0.9)])
-    label = np.array(l[:int(size * 0.9)])
-    d_v = np.array(d[int(size * 0.1):])
-    l_v = np.array(l[int(size * 0.1):])
-    data, d_v = preprocess_data(data, d_v)
+    d, l, size = random_split(images_and_labels)
+    data_train = np.array(d[:int(size * 0.9)])
+    label_train = np.array(l[:int(size * 0.9)])
+    data_test = np.array(d[int(size * 0.1):])
+    label_test = np.array(l[int(size * 0.1):])
+    scaler = get_scaler(data_train)
+    save_scaler(scaler)
+    data_train = scale_data(data_train, scaler)
+    data_test = scale_data(data_test, scaler)
     model = Sequential()
-    model.add(Dense(j, input_dim=input, init='uniform', activation='relu'))
+    model.add(Dense(j, input_dim=INPUT_SIZE, init='uniform', activation='relu'))
     model.add(Dense(k, init='uniform', activation='relu'))
     model.add(Dense(k, init='uniform', activation='relu'))
     model.add(Dense(k, init='uniform', activation='relu'))
@@ -126,16 +133,18 @@ def train(j,k, epochs=50):
     # Compile model
     model.compile(loss='binary_crossentropy', optimizer='adam', metrics=['accuracy'])
     # Train the model, iterating on the data in batches of 32 samples
-    model.fit(data, label, validation_split=0.02, epochs=epochs)
-    predictions = model.predict(d_v)
+    model.fit(data_train, label_train, validation_split=0.02, epochs=epochs)
+    predictions = model.predict(data_test)
     # round predictions
-    rounded = [round(x[0]) for x in predictions]
-    [ACC, TPR, TNR] = compute_TPR_TNR(l_v, rounded)
+    rounded_predictions = [round(x[0]) for x in predictions]
+    [ACC, TPR, TNR] = compute_TPR_TNR(label_test, rounded_predictions)
+
+    return (model, ACC, TPR, TNR)
 
 
-train(25,10,epochs=15)
+model, ACC, TPR, TNR = train(25, 10, epochs=15)
 
-model.save(KERAS_MODEL_PATH + SORT[1] + ".h5")
+model.save(KERAS_MODEL_PATH + TRAINING_DATASET[1] + ".h5")
 
 print 'Accuracy is: ' + str(ACC) + ' True Positive Rate: ' + str(
         TPR) + ' True Negative Rate: ' + str(TNR)  + " "+ str(_j) + " k: " +str(_k)

@@ -23,6 +23,15 @@ def start_server(port):
         thread.shutdown()
         sys.exit(0)
 
+def clean_directory(path):
+    for file_name in os.listdir(path):
+        file_path = os.path.join(path, file_name)
+        try:
+            if os.path.isfile(file_path):
+                os.unlink(file_path)
+        except Exception as e:
+            print(e)
+
 def crop_image(file_name, width, height, bwidth, bheight, cuts=1):
     im = Image.open('{}.png'.format(file_name)) # uses PIL library to open image in memory
 
@@ -87,10 +96,13 @@ if __name__ == '__main__':
     parser.add_argument('--sentences', type=int, default=10, help='number of sentences in a line')
     parser.add_argument('--close', type=bool, default=True, help='close the browser at the end of the procedure')
     parser.add_argument('--web_server', type=bool, default=False, help='start the web server automatically')
+    parser.add_argument('--clean', type=bool, default=True, help='delete the old training directory')
     parser.add_argument('--skip_line', type=int, default=2, help='how many lines before skipping one line')
     parser.add_argument('--skip_lines', type=int, default=2, help='how many lines to skip')
     parser.add_argument('--cuts', type=int, default=2, help='how many images from the same screenshot')
     FLAGS, unparsed = parser.parse_known_args()
     if FLAGS.web_server:
         start_server(FLAGS.port)
+    if FLAGS.clean:
+        clean_directory(FLAGS.training)
     generate_training(FLAGS)
