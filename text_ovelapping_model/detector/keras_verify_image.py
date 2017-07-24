@@ -25,15 +25,15 @@ background_model = load_model(keras_model_path)
 with open(scaler_path + model_name, "rb") as f:
     background_scaler = pickle.load(f)
 
-inner_model_name = "cropped-overlap10"
+inner_model_name = "cropped-overlap-10"
 with open(scaler_path + inner_model_name, "rb") as f:
     scaler_10 = pickle.load(f)
 model_10 = load_model(path+"model" + inner_model_name + ".h5")
 
 
 def get_models(window_size):
-    if window_size == 0:
-        return (scaler_10, model_10, 10, 1, 0.9999999, 15,True)
+    if window_size == 12:
+        return (scaler_10, model_10, 10, 1, 0.9999999, 15, True)
 
 
 def check_image(img, pixels,
@@ -43,7 +43,7 @@ def check_image(img, pixels,
                 x, y,
                 convert_to_l=True,
                 tresh_hold=0.99,
-                mark_color=100,
+                mark_color=0,
                 smaller_than_treshhold=True,
                 ):
     n, m = img.size
@@ -64,8 +64,8 @@ def check_image(img, pixels,
         r = window_size/2
         if (proba > tresh_hold)== smaller_than_treshhold:
             colored.append((i,j))
+            s.add(str(proba))
             for k, l in itertools.product(range(-r, r), range(-r, r)):
-                s.add(str(proba))
                 if mark_color is not 0:
                     pixels[x + i + int(window_size / 2) + k, y + j + int(window_size / 2) + l] = (
                 255, mark_color, int(200 * proba))
@@ -117,7 +117,7 @@ for photo in listing:
         img = Image.open(path_photo + '/' + photo)
         img_new = img.copy()
         pixels = img_new.load()
-        c_list = check_image(img, pixels, background_scaler, background_model, 12, 12, 0, 0)
+        c_list = check_image(img, pixels, background_scaler, background_model, 12, 4, 0, 0)
         with open(path_photo+ "/res-img/"+ "img_" + photo, "wb") as f:
             pickle.dump(c_list, f)
         print "|||||||||||||||||||||||||"
