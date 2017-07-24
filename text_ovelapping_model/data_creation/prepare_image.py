@@ -4,6 +4,10 @@ from PIL import Image
 from PIL import ImageChops
 import os
 import glob
+# from text_ovelapping_model.params import window_size, step_size
+window_size=10
+window_size_w=10
+step_size= 10
 
 from text_ovelapping_model.params import IMAGE_SIZE, STEP_SIZE
 
@@ -24,8 +28,8 @@ def crop(p_name,s):
             if ImageChops.invert(cropped_img).getbbox():
                 cropped_img.save(path + 'cropped-' + s + '/' + p_name + '-' + str(i) + '-' + str(j) + '.png')
         print '\n'
-    except:
-        pass
+    except Exception as e:
+        print e
 
 
 #preparing photo windows from given photos. prints the name of each file and each dot represents a cropped photo
