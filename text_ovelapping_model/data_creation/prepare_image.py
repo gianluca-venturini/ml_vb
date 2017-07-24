@@ -5,9 +5,9 @@ from PIL import ImageChops
 import os
 import glob
 # from text_ovelapping_model.params import window_size, step_size
-window_size=12
-window_size_w=44
-step_size= 6
+window_size=10
+window_size_w=10
+step_size= 10
 
 from text_ovelapping_model.params import IMAGE_SIZE, STEP_SIZE
 

@@ -10,15 +10,15 @@ from keras.models import Sequential
 import pickle
 from sklearn.preprocessing import StandardScaler
 
-path = '/Users/ran/Documents/ML_bad_lf/indent/'
+path = '/Users/ran/Documents/ML_bad_lf/overlap/'
 scaler_path = path+"scaler"
 keras_model_path = path+"model"
 
-window_size = 12
-window_size_w = 44
-sort = ['cropped-pink', 'cropped-nonp']
+window_size = 10
+window_size_w = 10
+sort = ['cropped-text10', 'cropped-overlap-10']
 
-sample_size = [37, 49543]
+sample_size = [39985, 39985]
 input = window_size_w * window_size
 
 
@@ -132,7 +132,7 @@ def train(j,k, epochs=50):
     [ACC, TPR, TNR] = compute_TPR_TNR(l_v, rounded)
 
 
-train(25,10,epochs=15)
+train(25,10,epochs=1000)
 
 model.save(keras_model_path+sort[1]+".h5")
 
