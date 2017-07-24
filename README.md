@@ -12,6 +12,11 @@ Assuming that you already have:
 # Activate the virtualenv
 source bin/activate
 python generate_images.py --web_server=True
+
+# Example of good dataset 50,000 samples 64x64
+python generate_images.py --width 64 --height 64 --training training/good --words 0 --images 100 --cuts 500
+# Example of bug dataset 50,000 samples 64x64
+python generate_images.py --width 64 --height 64 --training training/bug --images 100 --cuts 500
 ```
 
 # Check all the parameters of the training set generator

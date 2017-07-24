@@ -33,7 +33,7 @@ def clean_directory(path):
         except Exception as e:
             print(e)
 
-def crop_image(file_name, width, height, bwidth, bheight, cuts=1, remove_monocrome=False):
+def crop_image(file_name, width, height, bwidth, bheight, cuts=1, remove_monocrome=False, monocrome_probability=0.1):
     im = Image.open('{}.png'.format(file_name)) # uses PIL library to open image in memory
 
     count = 0
@@ -52,7 +52,7 @@ def crop_image(file_name, width, height, bwidth, bheight, cuts=1, remove_monocro
                 for y in range(0, bottom - top):
                     if color != px[x, y]:
                         monocrome = False
-        if (not remove_monocrome) or (not monocrome):
+        if (not remove_monocrome) or (not monocrome) or random.random() < monocrome_probability:
             cropped_image.save('{}-{}.png'.format(file_name, count))
             count += 1
     os.remove('{}.png'.format(file_name))
@@ -88,16 +88,17 @@ def generate_training(FLAGS):
                        FLAGS.bwidth,
                        FLAGS.bheight,
                        FLAGS.cuts,
-                       FLAGS.remove_monocrome)
+                       FLAGS.remove_monocrome,
+                       FLAGS.monocrome_probability)
         element.click()
 
     if FLAGS.close:
         driver.quit()
 
-def generate_image(driver, number, width, height, bwidth, bheight, cuts, remove_monocrome):
+def generate_image(driver, number, width, height, bwidth, bheight, cuts, remove_monocrome, monocrome_probability):
         file_name = '{}/{}'.format(FLAGS.training, number)
         save_image(driver, file_name)
-        crop_image(file_name, width, height, bwidth, bheight, cuts, remove_monocrome)
+        crop_image(file_name, width, height, bwidth, bheight, cuts, remove_monocrome, monocrome_probability)
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
@@ -117,7 +118,7 @@ if __name__ == '__main__':
     parser.add_argument('--web_server', type=bool, default=False, help='start the web server automatically')
     parser.add_argument('--clean', type=bool, default=True, help='delete the old training directory')
     parser.add_argument('--remove_monocrome', type=bool, default=True, help='don\'t save monocrome images')
-    parser.add_argument('--monocrome_probability', type=float, default=0.1, help='probability of being selected if monocrome')
+    parser.add_argument('--monocrome_probability', type=float, default=0.01, help='probability of being selected if monocrome')
     parser.add_argument('--skip_line', type=int, default=2, help='how many lines before skipping one line')
     parser.add_argument('--skip_lines', type=int, default=2, help='how many lines to skip')
     parser.add_argument('--cuts', type=int, default=2, help='how many images from the same screenshot')
