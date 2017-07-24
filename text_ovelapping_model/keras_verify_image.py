@@ -67,28 +67,27 @@ def check_image(img,
     #                         mark_color=m_color)
     # print s
 
-    for x in range(0, image_width - sample_size):
+    for x in range(0, image_width - sample_size, step_size):
         print 'analyzing row {}'.format(x)
-        for y in range(0, image_height - sample_size):
-            print '{}.{}'.format(x, y)
+        for y in range(0, image_height - sample_size, step_size):
             cropped_img = img.crop((x, y, x + sample_size, y + sample_size))
 
             if convert_to_l:
                 cropped_img = cropped_img.convert('L')
 
             arr_orig = np.array(cropped_img).ravel()
-            arr = scaler.transform(arr_orig).tolist()
-            proba = model.predict(np.array([arr]))[0]
+            arr = scaler.transform(arr_orig.reshape((1, -1))).ravel().reshape((1, -1))
+            proba = model.predict(arr)[0]
 
-            if (proba > tresh_hold)== smaller_than_treshold:
+            if (proba > tresh_hold) == smaller_than_treshold:
                 # Draw a colored square
                 for d_x in range(-5, 5):
                     for d_y in range(-5, 5):
                         probabilities.add(str(proba))
                         pixels[x + d_x + int(sample_size / 2), y + d_y + int(sample_size / 2)] = (
                             255,
-                            mark_color,
-                            int(200 * proba)
+                            0,
+                            int(255 * proba)
                         )
     print probabilities
 

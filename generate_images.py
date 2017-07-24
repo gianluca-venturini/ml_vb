@@ -24,6 +24,7 @@ def start_server(port):
         sys.exit(0)
 
 def clean_directory(path):
+    print "Deleting files in {}".format(path)
     for file_name in os.listdir(path):
         file_path = os.path.join(path, file_name)
         try:
@@ -32,17 +33,28 @@ def clean_directory(path):
         except Exception as e:
             print(e)
 
-def crop_image(file_name, width, height, bwidth, bheight, cuts=1):
+def crop_image(file_name, width, height, bwidth, bheight, cuts=1, remove_monocrome=False):
     im = Image.open('{}.png'.format(file_name)) # uses PIL library to open image in memory
 
-    for number in xrange(cuts):
-        left = random.uniform(0, bwidth - width)
-        top = random.uniform(0, bheight - height)
+    count = 0
+    while count < cuts:
+        left = int(random.uniform(0, bwidth - width))
+        top = int(random.uniform(0, bheight - height))
         right = left + width
         bottom = top + height
 
         cropped_image = im.crop((left, top, right, bottom)) # defines crop points
-        cropped_image.save('{}-{}.png'.format(file_name, number))
+        monocrome = True
+        if remove_monocrome:
+            px = cropped_image.load()
+            color = px[0, 0]
+            for x in range(0, right - left):
+                for y in range(0, bottom - top):
+                    if color != px[x, y]:
+                        monocrome = False
+        if (not remove_monocrome) or (not monocrome):
+            cropped_image.save('{}-{}.png'.format(file_name, count))
+            count += 1
     os.remove('{}.png'.format(file_name))
 
 def save_image(driver, file_name):
@@ -69,16 +81,23 @@ def generate_training(FLAGS):
     for number in xrange(FLAGS.images):
         wait = WebDriverWait(driver, 10)
         element = wait.until(EC.element_to_be_clickable((By.ID, 'main')))
-        generate_image(driver, number, FLAGS.width, FLAGS.height, FLAGS.bwidth, FLAGS.bheight, FLAGS.cuts)
+        generate_image(driver,
+                       number,
+                       FLAGS.width,
+                       FLAGS.height,
+                       FLAGS.bwidth,
+                       FLAGS.bheight,
+                       FLAGS.cuts,
+                       FLAGS.remove_monocrome)
         element.click()
 
     if FLAGS.close:
         driver.quit()
 
-def generate_image(driver, number, width, height, bwidth, bheight, cuts):
+def generate_image(driver, number, width, height, bwidth, bheight, cuts, remove_monocrome):
         file_name = '{}/{}'.format(FLAGS.training, number)
         save_image(driver, file_name)
-        crop_image(file_name, width, height, bwidth, bheight, cuts)
+        crop_image(file_name, width, height, bwidth, bheight, cuts, remove_monocrome)
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
@@ -97,6 +116,8 @@ if __name__ == '__main__':
     parser.add_argument('--close', type=bool, default=True, help='close the browser at the end of the procedure')
     parser.add_argument('--web_server', type=bool, default=False, help='start the web server automatically')
     parser.add_argument('--clean', type=bool, default=True, help='delete the old training directory')
+    parser.add_argument('--remove_monocrome', type=bool, default=True, help='don\'t save monocrome images')
+    parser.add_argument('--monocrome_probability', type=float, default=0.1, help='probability of being selected if monocrome')
     parser.add_argument('--skip_line', type=int, default=2, help='how many lines before skipping one line')
     parser.add_argument('--skip_lines', type=int, default=2, help='how many lines to skip')
     parser.add_argument('--cuts', type=int, default=2, help='how many images from the same screenshot')
