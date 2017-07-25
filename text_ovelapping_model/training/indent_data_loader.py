@@ -121,10 +121,6 @@ def compute_TPR_TNR(y_test, y_predict):
     ACC = float(TP + TN) / (TP + FP + FN + TN)
     return [ACC, TPR, TNR]
 
-s_model = None
-old_TNR = 0
-old_ACC = 0
-old_TPR = 0
 _k =0
 _j=0
 
