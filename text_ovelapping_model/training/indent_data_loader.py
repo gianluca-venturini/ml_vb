@@ -30,6 +30,21 @@ def preprocess_data(X_user_train,  X_test):
 
     return  scaler.transform(X_user_train).tolist(),  scaler.transform(X_test).tolist()
 
+def get_lines(arr_tup):
+    arr = []
+    for c, b  in arr_tup:
+        arr.append(c)
+        arr.append(b)
+        s = len(arr)
+        second = s % 4 == 0
+        if second and arr[-4]==c:
+            if (b-arr[-3])<50:
+                del arr[-1]
+                del arr[-1]
+                del arr[-1]
+                del arr[-1]
+
+    return arr
 
 # preparing photo windows from given photos
 def add_pcs(dedup=True):
@@ -46,14 +61,15 @@ def add_pcs(dedup=True):
                 # arr = np.array(img).ravel()
                 with open(path + sort[i] + '/' + photo, "rb") as f:
                     arr_tup = pickle.load(f)
-                arr = []
-                for c, b in arr_tup:
-                    # arr.append(c)
-                    arr.append(b)
+                # arr = []
+                # for c, b in arr_tup:
+                #     # arr.append(c)
+                #     arr.append(b)
+                arr = get_lines(arr_tup)
                 print "odododododo"
                 print (1200 - len(arr))
                 print "odododododo"
-                zeros = [0] * (1500 - len(arr))
+                zeros = [0] * (input - len(arr))
                 arr.extend(zeros)
 
                 if len(arr)==0:
@@ -65,8 +81,8 @@ def add_pcs(dedup=True):
                     s.add(hash(str(arr)))
                 a.append([arr, i])
             except Exception as e:
-                # raise e
                 print e
+    print a
     return a
 
 
@@ -151,7 +167,7 @@ def train(j,k, epochs=50):
     [ACC, TPR, TNR] = compute_TPR_TNR(l_v, rounded)
 
 
-train(25,10,epochs=1000)
+train(25,10,epochs=2)
 
 model.save(keras_model_path+sort[1]+".h5")
 
