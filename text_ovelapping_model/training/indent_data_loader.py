@@ -16,7 +16,7 @@ keras_model_path = path+"model"
 
 sort = ['indent', 'indent-bad']
 
-sample_size = [6, 9]
+sample_size = [6, 6]
 input = 1100
 
 
@@ -61,20 +61,14 @@ def add_pcs(dedup=True):
                 # arr = np.array(img).ravel()
                 with open(path + sort[i] + '/' + photo, "rb") as f:
                     arr_tup = pickle.load(f)
-                # arr = []
-                # for c, b in arr_tup:
-                #     # arr.append(c)
-                #     arr.append(b)
                 arr = get_lines(arr_tup)
                 print "odododododo"
                 print (input - len(arr))
                 print "odododododo"
-                zeros = [0] * (input - len(arr))
-                arr.extend(zeros)
-
                 if len(arr)==0:
                     continue
-                # arr = np.array(arr)
+                zeros = [0] * (input - len(arr))
+                arr.extend(zeros)
                 if dedup:
                     if hash(str(arr)) in s:
                         continue
@@ -98,8 +92,6 @@ def random_split():
     size = len(x_y)
     d = [x[0] for x in x_y]
     l = [x[1] for x in x_y]
-
-
 
 def performance_measure(y_actual, y_hat):
     TN, FP, FN, TP = confusion_matrix(y_actual, y_hat).ravel()
@@ -141,15 +133,13 @@ _j=0
 def train(j,k, epochs=50):
     global model, x, ACC, TPR, TNR
     random_split()
-    # data = np.array(d[:int(size * 0.9)])
-    # label = np.array(l[:int(size * 0.9)])
-    # d_v = np.array(d[int(size * 0.1):])
-    # l_v = np.array(l[int(size * 0.1):])
-    #
+    d_v = np.array(d[int(size * 0.1):])
+    l_v = np.array(l[int(size * 0.1):])
+
     data = np.array(d)
     label = np.array(l)
 
-    # data, d_v = preprocess_data(data, label)
+    data, d_v = preprocess_data(data, d_v)
     data = np.array(d)
     model = Sequential()
     model.add(Dense(j, input_dim=input, init='uniform', activation='relu'))
@@ -167,7 +157,7 @@ def train(j,k, epochs=50):
     [ACC, TPR, TNR] = compute_TPR_TNR(l_v, rounded)
 
 
-train(25,10,epochs=1000)
+train(800,10,epochs=2)
 
 model.save(keras_model_path+sort[1]+".h5")
 
