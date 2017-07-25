@@ -47,5 +47,5 @@ The model will be saved in *keras_model* directory
 # Test the results on a real image
 ```
 cd text_ovelapping_model
-python keras_verify_image.py --text_model text --step_size 64 --text_overlap_treshold 0.9
+python keras_verify_image.py --text_model text --text_overlap_treshold 0.5 --text_treshold 0.5 --text_step_size 32 --text_overlap_step_size 1
 ```
