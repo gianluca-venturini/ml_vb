@@ -1,22 +1,15 @@
 import itertools
-
-
 import numpy as np
 from keras.models import load_model
 from PIL import Image
 import os
 import pickle
+import argparse
 
 # first remove bacground than attach model detectors per image size
 # each model use its color to mark detected bugs
 
-from params import SAMPLE_SIZE, STEP_SIZE, KERAS_MODEL_PATH, SCALER_TRAINING_FILE, TRAINING_DATASET
-
-# load models
-background_model = load_model(KERAS_MODEL_PATH + TRAINING_DATASET[1] + ".h5")
-with open(SCALER_TRAINING_FILE, "rb") as f:
-    scaler = pickle.load(f)
-model = load_model(KERAS_MODEL_PATH + TRAINING_DATASET[1] + ".h5")
+from params import SAMPLE_SIZE, KERAS_MODEL_PATH, TRAINING_DATASET, PATH_TEST_PHOTOS
 
 
 def get_models():
@@ -63,18 +56,34 @@ def check_image(img,
     print probabilities
 
 
+def load_model_and_scaler(model_name):
+    model = load_model(os.path.join(KERAS_MODEL_PATH, model_name + ".h5"))
+    with open(os.path.join(KERAS_MODEL_PATH, model_name + '.pickle'), "rb") as f:
+        scaler = pickle.load(f)
+    return (model, scaler)
 
+if __name__ == '__main__':
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--text_overlap_model', type=str, default='text_overlap', help='path of the overlapping model')
+    parser.add_argument('--text_model', type=str, default='text', help='path of the text model')
+    parser.add_argument('--sample_size', type=int, default=SAMPLE_SIZE, help='the sample image is (SAMPLE_SIZE x SAMPLE_SIZE)')
+    parser.add_argument('--step_size', type=int, default=SAMPLE_SIZE, help='the amount of pixels between every jump')
+    parser.add_argument('--photos', type=str, default=PATH_TEST_PHOTOS, help='path of the test photo directory')
+    FLAGS, unparsed = parser.parse_known_args()
 
-#preparing photo windows from given photos. prints the name of each file and each dot represents a cropped photo
-listing = os.listdir(PATH_TEST_PHOTOS)
-for photo in listing:
-    try:
-        img = Image.open(path_photo + '/' + photo)
-        img_new = img.copy()
-        pixels = img_new.load()
-        check_image(img, pixels, scaler, background_model, SAMPLE_SIZE, STEP_SIZE)
-        img_new.show()
-        img_new.save(path_photo + "/res/" + photo + "_t_" + '.png')
-    except Exception as e:
-        print e
+    # load models
+    text_overlap_model, text_overlap_scaler = load_model_and_scaler(FLAGS.text_overlap_model)
+    # text_model = load_model_and_scaler(FLAGS.text_overlap_model)
 
+    #preparing photo windows from given photos. prints the name of each file and each dot represents a cropped photo
+    listing = os.listdir(FLAGS.photos)
+    for photo in listing:
+        try:
+            img = Image.open(FLAGS.photos + '/' + photo)
+            img_new = img.copy()
+            pixels = img_new.load()
+            check_image(img, pixels, text_overlap_scaler, text_overlap_model, FLAGS.sample_size, FLAGS.step_size)
+            img_new.show()
+            img_new.save(FLAGS.photos + "/res/" + photo + "_t_" + '.png')
+        except Exception as e:
+            print e

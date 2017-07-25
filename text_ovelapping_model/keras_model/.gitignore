@@ -1,0 +1,3 @@
+# Keras model
+*.h5
+*.pickle

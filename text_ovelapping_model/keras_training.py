@@ -160,14 +160,14 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--training', type=str, required=True, help='the path for the training dataset')
     parser.add_argument('--model_name', type=str, required=True, help='the name of the output model')
-    parser.add_argument('--good_train', type=int, default=100, help='number of images to sample from the good dataset')
-    parser.add_argument('--bug_train', type=int, default=100, help='number of images to sample from the bug dataset')
+    parser.add_argument('--num_good_train_images', type=int, default=100, help='number of images to sample from the good dataset')
+    parser.add_argument('--num_bug_train_images', type=int, default=100, help='number of images to sample from the bug dataset')
     parser.add_argument('--dedup', type=bool, default=True, help='if True the good and bad sampled datasets are disjoint')
     FLAGS, unparsed = parser.parse_known_args()
 
     numpy.random.seed()
 
-    dataset_sample_size=[FLAGS.good_train, FLAGS.bug_train]
+    dataset_sample_size=[FLAGS.num_good_train_images, FLAGS.num_bug_train_images]
     images_and_labels = add_pcs(FLAGS.training, dataset_sample_size, dedup=FLAGS.dedup)
     print len(images_and_labels)
     print "=============================="
