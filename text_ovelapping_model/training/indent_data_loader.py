@@ -67,7 +67,7 @@ def add_pcs(dedup=True):
                 #     arr.append(b)
                 arr = get_lines(arr_tup)
                 print "odododododo"
-                print (1200 - len(arr))
+                print (input - len(arr))
                 print "odododododo"
                 zeros = [0] * (input - len(arr))
                 arr.extend(zeros)
