@@ -80,22 +80,12 @@ def check_image(img, pixels,
                             smaller_than_treshhold=smtt
                 )
 
-    print s
-    print "^^^^^^^^^^^^^^^^^^^^^^^^^"
-    print len(colored)
-    print "888888888888888888"
-    print colored
-    rects = remove_non_relevant_points_inside_rect(colored, step_size+window_size)
-    print "^^^^^^^^^^^^^^^^^^^^^^^^^"
-    print rects
-    print len(rects)
-    print "*********************"
-    return rects
+    return remove_non_relevant_points_inside_rect(colored, step_size+window_size)
 
 
 # leave only edge points of colored lines
 def remove_non_relevant_points_inside_rect(line, window_size):
-    space = max([window_size, 30])
+    space = max([window_size, 27])
     min_sentence = 35
     rects = []
     if not line:
@@ -111,8 +101,6 @@ def remove_non_relevant_points_inside_rect(line, window_size):
             (x, y, d) = (a,b, window_size)
     return rects
 
-
-
 def paint_by_list(rects, window_size, pixels):
     mark_color =  3
     for x, y , d in rects:
@@ -123,21 +111,23 @@ def paint_by_list(rects, window_size, pixels):
 
 #preparing photo windows from given photos. prints the name of each file and each dot represents a cropped photo
 listing = os.listdir(path_photo)
+length = []
 for photo in listing:
     try:
         img = Image.open(path_photo + '/' + photo)
         img_new = img.copy()
         pixels = img_new.load()
         c_list = check_image(img, pixels, background_scaler, background_model, 12, 12, 0, 0)
-        with open(path_photo+ "/res-nr/"+ "nr_" + photo, "wb") as f:
+        with open(path_photo+ "/res-nr/"+ "nr_" + photo[:-2], "wb") as f:
             pickle.dump(c_list, f)
         paint_by_list(c_list, 12, pixels)
         print "|||||||||||||||||||||||||"
-        print (len(c_list))
+        length.append(len(c_list))
         print "|||||||||||||||||||||||||"
         img_new.show()
         img_new.save(path_photo + "/res-img/" + photo + "_t_" + '.png')
     except IOError as e:
         # raise
         print e
+print length
 
