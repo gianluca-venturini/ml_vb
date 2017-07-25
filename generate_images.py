@@ -75,7 +75,7 @@ def generate_training(FLAGS):
         'sentences': FLAGS.sentences,
         'skip_line': FLAGS.skip_line,
         'skip_lines': FLAGS.skip_lines,
-        'images': json.dumps(os.listdir(os.path.join('image_generator', FLAGS.background_images))),
+        'images': json.dumps([img for img in os.listdir(os.path.join('image_generator', FLAGS.background_images)) if img != '.DS_Store']),
         'images_path': FLAGS.background_images,
     }
     stringified_parameters = '&'.join(['{}={}'.format(key, value) for (key, value) in parameters.items()])

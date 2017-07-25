@@ -11,6 +11,7 @@ from keras.models import Sequential
 import pickle
 from sklearn.preprocessing import StandardScaler
 import argparse
+import tensorflow as tf
 
 from params import (
     KERAS_MODEL_PATH,
@@ -118,16 +119,17 @@ old_TPR = 0
 _k =0
 _j=0
 
-def get_convolution_model(layers):
-    model = Sequential()
-    model.add(Conv2D(layers[0], input_shape=(SAMPLE_SIZE, SAMPLE_SIZE, 1), activation='relu', kernel_size=(3, 3)))
-    model.add(Flatten())
-    model.add(Dense(layers[1], init='uniform', activation='relu'))
-    model.add(Dense(layers[2], init='uniform', activation='relu'))
-    model.add(Dense(1, init='uniform', activation='sigmoid'))
-    # Compile model
-    model.compile(loss='binary_crossentropy', optimizer='adam', metrics=['accuracy'])
-    return model
+def get_convolution_model(layers, image_size):
+    with tf.device('/gpu:0'):
+        model = Sequential()
+        model.add(Conv2D(layers[0], input_shape=(image_size, image_size, 1), activation='relu', kernel_size=(5, 5)))
+        model.add(Flatten())
+        model.add(Dense(layers[1], init='uniform', activation='relu'))
+        model.add(Dense(layers[2], init='uniform', activation='relu'))
+        model.add(Dense(1, init='uniform', activation='sigmoid'))
+        # Compile model
+        model.compile(loss='binary_crossentropy', optimizer='adam', metrics=['accuracy'])
+        return model
 
 
 def get_train_and_test_data(images_and_labels):
@@ -140,9 +142,10 @@ def get_train_and_test_data(images_and_labels):
 
 
 def train(model, epochs=50):
+    with tf.device('/gpu:0'):
+        # Train the model, iterating on the data in batches of 32 samples
+        model.fit(data_train, label_train, validation_split=0.02, epochs=epochs)
 
-    # Train the model, iterating on the data in batches of 32 samples
-    model.fit(data_train, label_train, validation_split=0.02, epochs=epochs)
     predictions = model.predict(data_test)
     # round predictions
     rounded_predictions = [round(x[0]) for x in predictions]
@@ -161,6 +164,7 @@ if __name__ == '__main__':
     parser.add_argument('--model_name', type=str, required=True, help='the name of the output model')
     parser.add_argument('--num_good_train_images', type=int, default=100, help='number of images to sample from the good dataset')
     parser.add_argument('--num_bug_train_images', type=int, default=100, help='number of images to sample from the bug dataset')
+    parser.add_argument('--image_size', type=int, default=64, help='size of the input image width=height=image_size')
     parser.add_argument('--dedup', type=bool, default=True, help='if True the good and bad sampled datasets are disjoint')
     parser.add_argument('--dataset_good_name', type=str, default='good', help='name of the directory that contains good images')
     parser.add_argument('--dataset_bug_name', type=str, default='bug', help='name of directory that contains bug images')
@@ -178,7 +182,7 @@ if __name__ == '__main__':
     data_train = scale_data(data_train, scaler)
     data_test = scale_data(data_test, scaler)
     save_scaler(KERAS_MODEL_PATH + FLAGS.model_name + '.pickle', scaler)
-    model = get_convolution_model(layers=[25, 25, 10])
+    model = get_convolution_model(layers=[64, 32, 16], image_size=FLAGS.image_size)
     ACC, TPR, TNR = train(model, epochs=15)
     model.save(KERAS_MODEL_PATH + FLAGS.model_name + ".h5")
     print_statistics(ACC, TPR, TNR)

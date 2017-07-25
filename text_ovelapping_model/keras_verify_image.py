@@ -16,8 +16,8 @@ def get_models():
     return (scaler, model, 10, 5, 0.005, 15)
 
 def draw_square(pixels, x, y, probability):
-    for d_x in range(-3, 3):
-        for d_y in range(-3, 3):
+    for d_x in range(-5, 5):
+        for d_y in range(-5, 5):
             pixels[x + d_x, y + d_y] = (
                 255,
                 0,
@@ -54,13 +54,12 @@ def check_image(img,
             arr = scaler.transform(arr_img.reshape((1, -1))).reshape((1,) + img_shape + (1,))
             proba = model.predict(arr)[0]
 
-            print proba
-
             if (proba > treshold) == smaller_than_treshold:
-                probabilities.add(str(proba))
                 if callback:
+                    print proba
                     callback(cropped_img, pixels, x + o_x, y + o_y)
                 if draw_pixels:
+                    probabilities.add(str(proba))
                     # Draw a colored square
                     draw_square(pixels, o_x + x + int(sample_size / 2), o_y + y + int(sample_size / 2), proba)
 
@@ -77,8 +76,9 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--text_overlap_model', type=str, default='text_overlap', help='path of the overlapping model')
     parser.add_argument('--text_model', type=str, default='text', help='path of the text model')
-    parser.add_argument('--sample_size', type=int, default=SAMPLE_SIZE, help='the sample image is (SAMPLE_SIZE x SAMPLE_SIZE)')
-    parser.add_argument('--text_step_size', type=int, default=SAMPLE_SIZE, help='the amount of pixels between every jump in text model')
+    parser.add_argument('--sample_size', type=int, default=64, help='the sample image is (SAMPLE_SIZE x SAMPLE_SIZE)')
+    parser.add_argument('--text_overlap_sample_size', type=int, default=32, help='the sample of the overlapped text image')
+    parser.add_argument('--text_step_size', type=int, default=16, help='the amount of pixels between every jump in text model')
     parser.add_argument('--text_overlap_step_size', type=int, default=1, help='the amount of pixels between every jump in text overlap model')
     parser.add_argument('--photos', type=str, default=PATH_TEST_PHOTOS, help='path of the test photo directory')
     parser.add_argument('--text_treshold', type=float, default=0.5, help='if predicted probability > treshold then is considered a match')
@@ -87,7 +87,7 @@ if __name__ == '__main__':
 
     # load models
     text_overlap_model, text_overlap_scaler = load_model_and_scaler(FLAGS.text_overlap_model)
-    text_model, text_scaler = load_model_and_scaler(FLAGS.text_overlap_model)
+    text_model, text_scaler = load_model_and_scaler(FLAGS.text_model)
 
     #preparing photo windows from given photos. prints the name of each file and each dot represents a cropped photo
     listing = os.listdir(FLAGS.photos)
@@ -108,7 +108,7 @@ if __name__ == '__main__':
                     pixels,
                     text_overlap_scaler,
                     text_overlap_model,
-                    FLAGS.sample_size,
+                    FLAGS.text_overlap_sample_size,
                     FLAGS.text_overlap_step_size,
                     o_x=x,
                     o_y=y,
@@ -116,6 +116,25 @@ if __name__ == '__main__':
                     draw_pixels=True,
                 )
             )
+            # check_image(img,
+            #     pixels,
+            #     text_scaler,
+            #     text_model,
+            #     FLAGS.sample_size,
+            #     FLAGS.text_step_size,
+            #     treshold=FLAGS.text_treshold,
+            #     draw_pixels=True,
+            # )
+            # check_image(
+            #     img,
+            #     pixels,
+            #     text_overlap_scaler,
+            #     text_overlap_model,
+            #     FLAGS.text_overlap_sample_size,
+            #     FLAGS.text_overlap_step_size,
+            #     treshold=FLAGS.text_overlap_treshold,
+            #     draw_pixels=True,
+            # )
             img_new.show()
             img_new.save(FLAGS.photos + "/res/" + photo + "_t_" + '.png')
         except Exception as e:
