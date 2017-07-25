@@ -96,26 +96,27 @@ if __name__ == '__main__':
             img = Image.open(FLAGS.photos + '/' + photo)
             img_new = img.copy()
             pixels = img_new.load()
-            check_image(img,
-                pixels,
-                text_scaler,
-                text_model,
-                FLAGS.sample_size,
-                FLAGS.text_step_size,
-                treshold=FLAGS.text_treshold,
-                callback=lambda cropped_img, pixels, x, y: check_image(
-                    cropped_img,
-                    pixels,
-                    text_overlap_scaler,
-                    text_overlap_model,
-                    FLAGS.text_overlap_sample_size,
-                    FLAGS.text_overlap_step_size,
-                    o_x=x,
-                    o_y=y,
-                    treshold=FLAGS.text_overlap_treshold,
-                    draw_pixels=True,
-                )
-            )
+            # check_image(img,
+            #     pixels,
+            #     text_scaler,
+            #     text_model,
+            #     FLAGS.sample_size,
+            #     FLAGS.text_step_size,
+            #     treshold=FLAGS.text_treshold,
+            #     callback=lambda cropped_img, pixels, x, y: check_image(
+            #         cropped_img,
+            #         pixels,
+            #         text_overlap_scaler,
+            #         text_overlap_model,
+            #         FLAGS.text_overlap_sample_size,
+            #         FLAGS.text_overlap_step_size,
+            #         o_x=x,
+            #         o_y=y,
+            #         treshold=FLAGS.text_overlap_treshold,
+            #         draw_pixels=True,
+            #     )
+            # )
+            # Text NN
             # check_image(img,
             #     pixels,
             #     text_scaler,
@@ -125,16 +126,17 @@ if __name__ == '__main__':
             #     treshold=FLAGS.text_treshold,
             #     draw_pixels=True,
             # )
-            # check_image(
-            #     img,
-            #     pixels,
-            #     text_overlap_scaler,
-            #     text_overlap_model,
-            #     FLAGS.text_overlap_sample_size,
-            #     FLAGS.text_overlap_step_size,
-            #     treshold=FLAGS.text_overlap_treshold,
-            #     draw_pixels=True,
-            # )
+            # Text overlap NN
+            check_image(
+                img,
+                pixels,
+                text_overlap_scaler,
+                text_overlap_model,
+                FLAGS.text_overlap_sample_size,
+                FLAGS.text_overlap_step_size,
+                treshold=FLAGS.text_overlap_treshold,
+                draw_pixels=True,
+            )
             img_new.show()
             img_new.save(FLAGS.photos + "/res/" + photo + "_t_" + '.png')
         except Exception as e:

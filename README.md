@@ -40,7 +40,7 @@ cd text_ovelapping_model
 # Train text / no text model
 python keras_training.py --model_name text --num_good_train_images 10000 --num_bug_images 10000 --training text_training --dataset_good_name no_text --dataset_bug_name text
 # Train the text overlap model
-python keras_training.py --model_name text_overlap --num_good_train_images 10000 --num_bug_images 10000 --training training --dataset_good_name good --dataset_bug_name bug --image_size 32
+python keras_training.py --model_name text_overlap --num_good_train_images 10000 --num_bug_train_images 10000 --training training --dataset_good_name good --dataset_bug_name bug --image_size 32
 ```
 The model will be saved in *keras_model* directory
 
