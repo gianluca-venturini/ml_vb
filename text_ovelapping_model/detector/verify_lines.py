@@ -49,8 +49,8 @@ def check_image(img, pixels,
     n, m = img.size
     s = set()
     colored = []
-    for i, j in itertools.product(range(0, n - window_size, step_size),
-                                  range(0, m - window_size, step_size)):
+    for j, i in itertools.product(range(0, m - window_size, step_size),
+                                  range(0, n - window_size, step_size)):
         print '.',
 
         cropped_img = img.crop((i, j, i + window_size, j + window_size))
@@ -85,45 +85,39 @@ def check_image(img, pixels,
     print len(colored)
     print "888888888888888888"
     print colored
-    only_rects(colored, step_size+window_size)
+    rects = remove_non_relevant_points_inside_rect(colored, step_size+window_size)
     print "^^^^^^^^^^^^^^^^^^^^^^^^^"
-    print colored
-    print len(colored)
+    print rects
+    print len(rects)
     print "*********************"
-    return colored
+    return rects
 
 
 # leave only edge points of colored lines
-def only_rects(line, step):
-    s = max([step, 30])
-    rem = 0
-    for size in range(1,len(line)):
-        size = size- rem
-        i , j = line[size]
-        first = size % 2 != 0
-        last = size - 1
-        prev_i, prev_j = line[last]
-        same_line = i == prev_i
-
-        if first:
-            if not same_line:
-                del line[last]
-                rem = rem + 1
-            elif j > prev_j + s:
-                del line[last]
-                rem = rem +1
+def remove_non_relevant_points_inside_rect(line, window_size):
+    space = max([window_size, 30])
+    min_sentence = 35
+    rects = []
+    if not line:
+        return
+    x, y = line[0]
+    d = window_size
+    for a, b in line:
+        if b == y and (a - x) < (space + d):
+            d = a-x
         else:
-            if j <= prev_j + s:
-                del line[last]
-                rem = rem + 1
+            if d > min_sentence:
+                rects.append((x, y,d))
+            (x, y, d) = (a,b, window_size)
+    return rects
 
 
-def paint_by_list(right_points, window_size, pixels):
-    r = int(window_size/ 2)
+
+def paint_by_list(rects, window_size, pixels):
     mark_color =  3
-    for x, y in right_points:
-        for k, l in itertools.product(range(-2 * r, 2 * r), range(-r, r)):
-            pixels[x + int(window_size / 2) + k, y + int(window_size / 2) + l] = (
+    for x, y , d in rects:
+        for k, l in itertools.product(range(d), range(window_size)):
+            pixels[x + k, y + l] = (
                 15, mark_color, 200)
 
 
