@@ -17,7 +17,7 @@ keras_model_path = path+"model"
 sort = ['indent', 'indent-bad']
 
 sample_size = [6, 9]
-input = 1500
+input = 1100
 
 
 def preprocess_data(X_user_train,  X_test):
@@ -167,7 +167,7 @@ def train(j,k, epochs=50):
     [ACC, TPR, TNR] = compute_TPR_TNR(l_v, rounded)
 
 
-train(25,10,epochs=2)
+train(25,10,epochs=1000)
 
 model.save(keras_model_path+sort[1]+".h5")
 
