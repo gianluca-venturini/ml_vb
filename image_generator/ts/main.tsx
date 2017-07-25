@@ -11,6 +11,36 @@ interface State {
   counter: number;
 }
 
+const fontSizes = [
+  12,
+  14,
+  15,
+  16,
+  17,
+  20,
+  22,
+  24,
+  25,
+  26,
+  31,
+  39,
+  45,
+]
+
+const fontWeights: (200 | 400 | 600 | 800)[] = [
+  200,
+  200,
+  200,
+  400,
+  400,
+  400,
+  400,
+  400,
+  400,
+  600,
+  800
+];
+
 const random = seedrandom(`123`);
 
 const parameters = queryString.parse(document.location.search);
@@ -24,6 +54,8 @@ const SENTENCES = parseInt(parameters['sentences']);
 const SKIP_LINE = parseInt(parameters['skip_line']);
 const SKIP_LINES = parseInt(parameters['skip_lines']);
 const LINES = Math.ceil(HEIGHT / (LINE_HEIGHT + VERTICAL_OFFSET));
+const BACKGROUND_IMAGES = JSON.parse(parameters['images']) as string[];
+const IMAGES_PATH = parameters['images_path'] as string;
 
 class Main extends React.Component<{}, State> {
 
@@ -55,6 +87,7 @@ class Main extends React.Component<{}, State> {
   render() {
 
     const sentences = [];
+    const imgSrc = `${IMAGES_PATH}/${BACKGROUND_IMAGES[Math.floor(BACKGROUND_IMAGES.length * random())]}`
 
     for (let line = 0; line < LINES; line++) {
       for (let sentence = 0; sentence < SENTENCES; sentence++) {
@@ -74,6 +107,8 @@ class Main extends React.Component<{}, State> {
             verticalOffset={ VERTICAL_OFFSET }
             lineHeight={ LINE_HEIGHT }
             opacity={ opacity }
+            fontSize={ fontSizes[Math.floor(random() * fontSizes.length)] }
+            fontWeight={ fontWeights[Math.floor(random() * fontWeights.length)] }
           >
             { words.join(' ') }
           </Sentence>
@@ -90,7 +125,7 @@ class Main extends React.Component<{}, State> {
           width: '100%',
           cursor: 'pointer',
           whiteSpace: 'nowrap',
-          backgroundImage: `url("images/dropbox-1.png")`,
+          backgroundImage: `url("${imgSrc}")`,
           backgroundPosition: `${random() * 2000}px ${random() * 2000}px`,
           backgroundRepeat: 'repeat',
           backgroundSize: '1679px 944px',

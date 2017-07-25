@@ -10,6 +10,7 @@ import SocketServer
 import threading
 from PIL import Image
 import random
+import json
 
 def start_server(port):
     print "serving at port ", port
@@ -74,6 +75,8 @@ def generate_training(FLAGS):
         'sentences': FLAGS.sentences,
         'skip_line': FLAGS.skip_line,
         'skip_lines': FLAGS.skip_lines,
+        'images': json.dumps(os.listdir(os.path.join('image_generator', FLAGS.background_images))),
+        'images_path': FLAGS.background_images,
     }
     stringified_parameters = '&'.join(['{}={}'.format(key, value) for (key, value) in parameters.items()])
     driver.get('http://127.0.0.1:8000/image_generator/?{}'.format(stringified_parameters))
@@ -119,9 +122,10 @@ if __name__ == '__main__':
     parser.add_argument('--clean', type=bool, default=True, help='delete the old training directory')
     parser.add_argument('--remove_monocrome', type=bool, default=True, help='don\'t save monocrome images')
     parser.add_argument('--monocrome_probability', type=float, default=0.01, help='probability of being selected if monocrome')
-    parser.add_argument('--skip_line', type=int, default=2, help='how many lines before skipping one line')
-    parser.add_argument('--skip_lines', type=int, default=2, help='how many lines to skip')
+    parser.add_argument('--skip_line', type=int, default=0, help='how many lines before skipping one line')
+    parser.add_argument('--skip_lines', type=int, default=0, help='how many lines to skip')
     parser.add_argument('--cuts', type=int, default=2, help='how many images from the same screenshot')
+    parser.add_argument('--background_images', type=str, default='images', help='directory hosting background images')
     FLAGS, unparsed = parser.parse_known_args()
     if FLAGS.web_server:
         start_server(FLAGS.port)

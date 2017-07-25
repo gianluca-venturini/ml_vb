@@ -17,6 +17,10 @@ python generate_images.py --web_server=True
 python generate_images.py --width 64 --height 64 --training training/good --words 0 --images 100 --cuts 500
 # Example of bug dataset 50,000 samples 64x64
 python generate_images.py --width 64 --height 64 --training training/bug --images 100 --cuts 500
+# Generate no text training dataset
+python generate_images.py --training text_ovelapping_model/text_training/no_text --word 0 --model_name text --background_images images_no_text --images 100 --cuts 500 --monocrome_probability 0.1
+# Generate text training dataset
+python generate_images.py --training text_ovelapping_model/text_training/text --model_name text --background_images images --images 100 --cuts 500 --monocrome_probability 0.001 --vertical-offset 0
 ```
 
 # Check all the parameters of the training set generator

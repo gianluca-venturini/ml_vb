@@ -7,6 +7,8 @@ interface Props {
   verticalOffset: number,
   lineHeight: number,
   opacity: number,
+  fontSize: number,
+  fontWeight: 200 | 400 | 600 | 800,
 }
 
 export class Sentence extends React.Component<Props, {}> {
@@ -20,10 +22,11 @@ export class Sentence extends React.Component<Props, {}> {
           whiteSpace: 'nowrap',
           marginRight: this.props.horizontalOffset,
           marginTop: this.props.verticalOffset,
-          fontSize: this.props.lineHeight,
           display: 'inline-block',
-          height: this.props.lineHeight,
+          height: Math.max(this.props.lineHeight, this.props.fontSize),
           opacity: this.props.opacity,
+          fontSize: this.props.fontSize,
+          fontWeight: this.props.fontWeight,
         }}
       >{this.props.children}</span>
     )
