@@ -14,7 +14,6 @@ import argparse
 
 from params import (
     KERAS_MODEL_PATH,
-    TRAINING_DATASET,
     SAMPLE_SIZE,
 )
 
@@ -45,16 +44,16 @@ def scale_data(non_scaled_data, scaler):
 
 
 # preparing photo windows from given photos
-def add_pcs(training_path, dataset_sample_size, dedup=True):
+def add_pcs(dataset_name, training_path, dataset_sample_size, dedup=True):
     images_and_labels = list()
     processed_image_hashes = set()
     for bucket in [0, 1]:
-        bucket_training_path = os.path.join(training_path + TRAINING_DATASET[bucket])
+        bucket_training_path = os.path.join(training_path, dataset_name[bucket])
         print '[{}] dataset size: {}'.format(bucket, dataset_sample_size[bucket])
         file_list = os.listdir(bucket_training_path)
         dataset_size = len(file_list)
         print 'total dataset size: {}'.format(dataset_size)
-        print TRAINING_DATASET[bucket]
+        print dataset_name[bucket]
         file_sample_list = random.sample(file_list, dataset_sample_size[bucket])
         for photo in file_sample_list:
             if photo == ".DS_Store":
@@ -163,12 +162,14 @@ if __name__ == '__main__':
     parser.add_argument('--num_good_train_images', type=int, default=100, help='number of images to sample from the good dataset')
     parser.add_argument('--num_bug_train_images', type=int, default=100, help='number of images to sample from the bug dataset')
     parser.add_argument('--dedup', type=bool, default=True, help='if True the good and bad sampled datasets are disjoint')
+    parser.add_argument('--dataset_good_name', type=str, default='good', help='name of the directory that contains good images')
+    parser.add_argument('--dataset_bug_name', type=str, default='bug', help='name of directory that contains bug images')
     FLAGS, unparsed = parser.parse_known_args()
 
     numpy.random.seed()
 
     dataset_sample_size=[FLAGS.num_good_train_images, FLAGS.num_bug_train_images]
-    images_and_labels = add_pcs(FLAGS.training, dataset_sample_size, dedup=FLAGS.dedup)
+    images_and_labels = add_pcs([FLAGS.dataset_good_name, FLAGS.dataset_bug_name], FLAGS.training, dataset_sample_size, dedup=FLAGS.dedup)
     print len(images_and_labels)
     print "=============================="
     data_train, label_train, data_test, label_test = get_train_and_test_data(images_and_labels)
@@ -177,7 +178,7 @@ if __name__ == '__main__':
     data_train = scale_data(data_train, scaler)
     data_test = scale_data(data_test, scaler)
     save_scaler(KERAS_MODEL_PATH + FLAGS.model_name + '.pickle', scaler)
-    model = get_convolution_model(layers=[25, 10, 10])
+    model = get_convolution_model(layers=[25, 25, 10])
     ACC, TPR, TNR = train(model, epochs=15)
     model.save(KERAS_MODEL_PATH + FLAGS.model_name + ".h5")
     print_statistics(ACC, TPR, TNR)

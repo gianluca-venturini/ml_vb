@@ -9,12 +9,19 @@ import argparse
 # first remove bacground than attach model detectors per image size
 # each model use its color to mark detected bugs
 
-from params import SAMPLE_SIZE, KERAS_MODEL_PATH, TRAINING_DATASET, PATH_TEST_PHOTOS
+from params import SAMPLE_SIZE, KERAS_MODEL_PATH, PATH_TEST_PHOTOS
 
 
 def get_models():
     return (scaler, model, 10, 5, 0.005, 15)
 
+def draw_square(pixels, x, y, probability):
+    for d_x in range(-3, 3):
+        for d_y in range(-3, 3):
+            pixels[x + d_x, y + d_y] = (
+                255,
+                0,
+                int(255 * probability))
 
 def check_image(img,
                 pixels,
@@ -24,15 +31,19 @@ def check_image(img,
                 step_size,
                 convert_to_l=True,
                 treshold=0.5,
-                mark_color=255,
-                smaller_than_treshold=True
+                smaller_than_treshold=True,
+                callback=None,
+                draw_pixels=False,
+                # Offset values for pixels
+                o_x=0,
+                o_y=0,
                 ):
     image_width, image_height = img.size
     probabilities = set()
 
-    for x in range(0, image_width - sample_size, step_size):
+    for x in range(0, image_width - sample_size + 1, step_size):
         print 'analyzing row {}'.format(x)
-        for y in range(0, image_height - sample_size, step_size):
+        for y in range(0, image_height - sample_size + 1, step_size):
             cropped_img = img.crop((x, y, x + sample_size, y + sample_size))
 
             if convert_to_l:
@@ -43,16 +54,16 @@ def check_image(img,
             arr = scaler.transform(arr_img.reshape((1, -1))).reshape((1,) + img_shape + (1,))
             proba = model.predict(arr)[0]
 
+            print proba
+
             if (proba > treshold) == smaller_than_treshold:
-                # Draw a colored square
-                for d_x in range(-5, 5):
-                    for d_y in range(-5, 5):
-                        probabilities.add(str(proba))
-                        pixels[x + d_x + int(sample_size / 2), y + d_y + int(sample_size / 2)] = (
-                            255,
-                            0,
-                            int(255 * proba)
-                        )
+                probabilities.add(str(proba))
+                if callback:
+                    callback(cropped_img, pixels, x + o_x, y + o_y)
+                if draw_pixels:
+                    # Draw a colored square
+                    draw_square(pixels, o_x + x + int(sample_size / 2), o_y + y + int(sample_size / 2), proba)
+
     print probabilities
 
 
@@ -67,13 +78,16 @@ if __name__ == '__main__':
     parser.add_argument('--text_overlap_model', type=str, default='text_overlap', help='path of the overlapping model')
     parser.add_argument('--text_model', type=str, default='text', help='path of the text model')
     parser.add_argument('--sample_size', type=int, default=SAMPLE_SIZE, help='the sample image is (SAMPLE_SIZE x SAMPLE_SIZE)')
-    parser.add_argument('--step_size', type=int, default=SAMPLE_SIZE, help='the amount of pixels between every jump')
+    parser.add_argument('--text_step_size', type=int, default=SAMPLE_SIZE, help='the amount of pixels between every jump in text model')
+    parser.add_argument('--text_overlap_step_size', type=int, default=1, help='the amount of pixels between every jump in text overlap model')
     parser.add_argument('--photos', type=str, default=PATH_TEST_PHOTOS, help='path of the test photo directory')
+    parser.add_argument('--text_treshold', type=float, default=0.5, help='if predicted probability > treshold then is considered a match')
+    parser.add_argument('--text_overlap_treshold', type=float, default=0.5, help='if predicted probability > treshold then is considered a match')
     FLAGS, unparsed = parser.parse_known_args()
 
     # load models
     text_overlap_model, text_overlap_scaler = load_model_and_scaler(FLAGS.text_overlap_model)
-    # text_model = load_model_and_scaler(FLAGS.text_overlap_model)
+    text_model, text_scaler = load_model_and_scaler(FLAGS.text_overlap_model)
 
     #preparing photo windows from given photos. prints the name of each file and each dot represents a cropped photo
     listing = os.listdir(FLAGS.photos)
@@ -82,7 +96,26 @@ if __name__ == '__main__':
             img = Image.open(FLAGS.photos + '/' + photo)
             img_new = img.copy()
             pixels = img_new.load()
-            check_image(img, pixels, text_overlap_scaler, text_overlap_model, FLAGS.sample_size, FLAGS.step_size)
+            check_image(img,
+                pixels,
+                text_scaler,
+                text_model,
+                FLAGS.sample_size,
+                FLAGS.text_step_size,
+                treshold=FLAGS.text_treshold,
+                callback=lambda cropped_img, pixels, x, y: check_image(
+                    cropped_img,
+                    pixels,
+                    text_overlap_scaler,
+                    text_overlap_model,
+                    FLAGS.sample_size,
+                    FLAGS.text_overlap_step_size,
+                    o_x=x,
+                    o_y=y,
+                    treshold=FLAGS.text_overlap_treshold,
+                    draw_pixels=True,
+                )
+            )
             img_new.show()
             img_new.save(FLAGS.photos + "/res/" + photo + "_t_" + '.png')
         except Exception as e:
