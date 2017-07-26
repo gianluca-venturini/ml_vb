@@ -24,12 +24,18 @@ keras_model_path = path+"model"+model_name+".h5"
 background_model = load_model(keras_model_path)
 with open(scaler_path + model_name, "rb") as f:
     background_scaler = pickle.load(f)
-
+#
 inner_model_name = "cropped-overlap-10"
 with open(scaler_path + inner_model_name, "rb") as f:
     scaler_10 = pickle.load(f)
 model_10 = load_model(path+"model" + inner_model_name + ".h5")
 
+model_name = 'bad-tuple'
+keras_model_path = path+"model"+model_name+".h5"
+
+# load models
+tup_model = load_model(keras_model_path)
+input =  300
 
 def get_models(window_size):
     if window_size == 0:
@@ -65,7 +71,7 @@ def check_image(img, pixels,
         if (proba > tresh_hold)== smaller_than_treshhold:
             colored.append((i,j))
             s.add(str(proba))
-            for k, l in itertools.product(range(-2*r, 2*r), range(-r, r)):
+            for k, l in itertools.product(range(window_size), range(window_size)):
                 if mark_color is not 0:
                     pixels[x + i + int(window_size / 2) + k, y + j + int(window_size / 2) + l] = (
                 255, mark_color, int(200 * proba))
@@ -82,6 +88,25 @@ def check_image(img, pixels,
 
     return remove_non_relevant_points_inside_rect(colored, step_size+window_size)
 
+
+def check_tup(tup,
+                model,
+                # scaler,
+                tresh_hold=0.99,
+                smaller_than_treshhold=True,
+                ):
+    try:
+        arr_orig = list(itertools.chain(*tup))
+        zeros = [0] * (input - len(arr_orig))
+        arr_orig.extend(zeros)
+        proba = model.predict(np.array([arr_orig]))[0]
+
+        print "************************"
+        print proba
+        print "************************"
+        return proba
+    except Exception as e:
+        print e
 
 # leave only edge points of colored lines
 def remove_non_relevant_points_inside_rect(line, window_size):
@@ -101,8 +126,7 @@ def remove_non_relevant_points_inside_rect(line, window_size):
             (x, y, d) = (a,b, window_size)
     return rects
 
-def paint_by_list(rects, window_size, pixels):
-    mark_color =  3
+def paint_by_list(rects, window_size, pixels,mark_color =  3):
     for x, y , d in rects:
         for k, l in itertools.product(range(d), range(window_size)):
             pixels[x + k, y + l] = (
@@ -118,6 +142,8 @@ for photo in listing:
         img_new = img.copy()
         pixels = img_new.load()
         c_list = check_image(img, pixels, background_scaler, background_model, 12, 12, 0, 0)
+        proba = check_tup(c_list,tup_model)
+        paint_by_list([(200,200,400)],20,pixels,90)
         with open(path_photo+ "/res-nr/"+ "nr_" + photo[:-2], "wb") as f:
             pickle.dump(c_list, f)
         paint_by_list(c_list, 12, pixels)
