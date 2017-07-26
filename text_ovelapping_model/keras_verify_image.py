@@ -5,6 +5,7 @@ from PIL import Image
 import os
 import pickle
 import argparse
+import tensorflow as tf
 
 # first remove bacground than attach model detectors per image size
 # each model use its color to mark detected bugs
@@ -15,9 +16,9 @@ from params import SAMPLE_SIZE, KERAS_MODEL_PATH, PATH_TEST_PHOTOS
 def get_models():
     return (scaler, model, 10, 5, 0.005, 15)
 
-def draw_square(pixels, x, y, probability):
-    for d_x in range(-5, 5):
-        for d_y in range(-5, 5):
+def draw_square(pixels, x, y, sample_size, probability):
+    for d_x in range(0, sample_size):
+        for d_y in range(0, sample_size):
             pixels[x + d_x, y + d_y] = (
                 255,
                 0,
@@ -34,9 +35,11 @@ def check_image(img,
                 smaller_than_treshold=True,
                 callback=None,
                 draw_pixels=False,
+                cropped_image_size=None,
                 # Offset values for pixels
                 o_x=0,
                 o_y=0,
+                reshape=True
                 ):
     image_width, image_height = img.size
     probabilities = set()
@@ -51,17 +54,25 @@ def check_image(img,
 
             arr_img = np.array(cropped_img)
             img_shape = arr_img.shape
-            arr = scaler.transform(arr_img.reshape((1, -1))).reshape((1,) + img_shape + (1,))
-            proba = model.predict(arr)[0]
+            if reshape:
+                arr = scaler.transform(arr_img.reshape((1, -1))).reshape((1,) + img_shape + (1,))
+            else:
+                arr = scaler.transform(arr_img.reshape((1, -1)))
+            with tf.device('/gpu:0'):
+                proba = model.predict(arr)[0]
 
             if (proba > treshold) == smaller_than_treshold:
                 if callback:
                     print proba
-                    callback(cropped_img, pixels, x + o_x, y + o_y)
+                    if cropped_image_size:
+                        s_x = x - int((sample_size - cropped_image_size) / 2)
+                        s_y = y - int((sample_size - cropped_image_size) / 2)
+                        cropped_img = img.crop((s_x, s_y, s_x + cropped_image_size, s_y + cropped_image_size)).convert('L')
+                    callback(cropped_img, pixels, s_x + o_x, s_y + o_y)
                 if draw_pixels:
                     probabilities.add(str(proba))
                     # Draw a colored square
-                    draw_square(pixels, o_x + x + int(sample_size / 2), o_y + y + int(sample_size / 2), proba)
+                    draw_square(pixels, o_x + x, o_y + y, sample_size, proba)
 
     print probabilities
 
@@ -76,7 +87,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--text_overlap_model', type=str, default='text_overlap', help='path of the overlapping model')
     parser.add_argument('--text_model', type=str, default='text', help='path of the text model')
-    parser.add_argument('--sample_size', type=int, default=64, help='the sample image is (SAMPLE_SIZE x SAMPLE_SIZE)')
+    parser.add_argument('--text_sample_size', type=int, default=64, help='the sample image is (SAMPLE_SIZE x SAMPLE_SIZE)')
     parser.add_argument('--text_overlap_sample_size', type=int, default=32, help='the sample of the overlapped text image')
     parser.add_argument('--text_step_size', type=int, default=16, help='the amount of pixels between every jump in text model')
     parser.add_argument('--text_overlap_step_size', type=int, default=1, help='the amount of pixels between every jump in text overlap model')
@@ -84,6 +95,10 @@ if __name__ == '__main__':
     parser.add_argument('--text_treshold', type=float, default=0.5, help='if predicted probability > treshold then is considered a match')
     parser.add_argument('--text_overlap_treshold', type=float, default=0.5, help='if predicted probability > treshold then is considered a match')
     FLAGS, unparsed = parser.parse_known_args()
+
+    if (len(unparsed) > 0):
+        print 'argument {} not recognized'.format(unparsed[0])
+        exit(0)
 
     # load models
     text_overlap_model, text_overlap_scaler = load_model_and_scaler(FLAGS.text_overlap_model)
@@ -96,13 +111,15 @@ if __name__ == '__main__':
             img = Image.open(FLAGS.photos + '/' + photo)
             img_new = img.copy()
             pixels = img_new.load()
+            # Preprocess with text/no text model and then feed to image overlap model
             # check_image(img,
             #     pixels,
             #     text_scaler,
             #     text_model,
-            #     FLAGS.sample_size,
+            #     FLAGS.text_sample_size,
             #     FLAGS.text_step_size,
             #     treshold=FLAGS.text_treshold,
+            #     cropped_image_size=FLAGS.text_overlap_sample_size + 8,
             #     callback=lambda cropped_img, pixels, x, y: check_image(
             #         cropped_img,
             #         pixels,
@@ -121,7 +138,7 @@ if __name__ == '__main__':
             #     pixels,
             #     text_scaler,
             #     text_model,
-            #     FLAGS.sample_size,
+            #     FLAGS.text_sample_size,
             #     FLAGS.text_step_size,
             #     treshold=FLAGS.text_treshold,
             #     draw_pixels=True,

@@ -32616,7 +32616,32 @@ var ReactDOM = require("react-dom");
 var seedrandom = require("seedrandom");
 var queryString = require("query-string");
 var sentence_1 = require("./sentence");
+var parameters = queryString.parse(document.location.search);
+var WORDS = parseInt(parameters['words']);
+var VERTICAL_OFFSET = parseInt(parameters['vertical_offset']);
+var HORIZONTAL_OFFSET = parseInt(parameters['horizontal_offset']);
+var WIDTH = parseInt(parameters['width']);
+var HEIGHT = parseInt(parameters['height']);
+var LINE_HEIGHT = parseInt(parameters['line_height']);
+var SENTENCES = parseInt(parameters['sentences']);
+var KEEP_LINES = parseInt(parameters['keep_lines']);
+var SKIP_LINES = parseInt(parameters['skip_lines']);
+var LINES = Math.ceil(HEIGHT / (LINE_HEIGHT + VERTICAL_OFFSET));
+var BACKGROUND_IMAGES = JSON.parse(parameters['images']);
+var IMAGES_PATH = parameters['images_path'];
+var MONOCROME_BACKGROUND = parameters['monocrome_background'] === '1';
+var LINE_SAME_FONT = parameters['line_same_font'] === '1';
+var MAX_FONT_SIZE = parameters['max_font_size'];
 var fontSizes = [
+    10,
+    10,
+    10,
+    10,
+    11,
+    11,
+    11,
+    11,
+    11,
     12,
     12,
     12,
@@ -32677,8 +32702,14 @@ var fontSizes = [
     31,
     39,
     45,
-];
+].filter(function (size) { return size <= MAX_FONT_SIZE; });
 var fontWeights = [
+    200,
+    200,
+    200,
+    200,
+    200,
+    200,
     200,
     200,
     200,
@@ -32692,19 +32723,6 @@ var fontWeights = [
     800
 ];
 var random = seedrandom("123");
-var parameters = queryString.parse(document.location.search);
-var WORDS = parseInt(parameters['words']);
-var VERTICAL_OFFSET = parseInt(parameters['vertical_offset']);
-var HORIZONTAL_OFFSET = parseInt(parameters['horizontal_offset']);
-var WIDTH = parseInt(parameters['width']);
-var HEIGHT = parseInt(parameters['height']);
-var LINE_HEIGHT = parseInt(parameters['line_height']);
-var SENTENCES = parseInt(parameters['sentences']);
-var SKIP_LINE = parseInt(parameters['skip_line']);
-var SKIP_LINES = parseInt(parameters['skip_lines']);
-var LINES = Math.ceil(HEIGHT / (LINE_HEIGHT + VERTICAL_OFFSET));
-var BACKGROUND_IMAGES = JSON.parse(parameters['images']);
-var IMAGES_PATH = parameters['images_path'];
 var Main = (function (_super) {
     __extends(Main, _super);
     function Main(props) {
@@ -32730,32 +32748,60 @@ var Main = (function (_super) {
             });
         });
     };
+    Main.prototype.generateRandomColor = function () {
+        return Math.floor(random() * 120);
+    };
+    Main.prototype.generateRandomFontSize = function () {
+        return fontSizes[Math.floor(random() * fontSizes.length)];
+    };
+    Main.prototype.generateRandomFontWeight = function () {
+        return fontWeights[Math.floor(random() * fontWeights.length)];
+    };
     Main.prototype.render = function () {
-        var sentences = [];
+        var lineElements = [];
         var imgSrc = IMAGES_PATH + "/" + BACKGROUND_IMAGES[Math.floor(BACKGROUND_IMAGES.length * random())];
         for (var line = 0; line < LINES; line++) {
+            var sentences = [];
+            var color = this.generateRandomColor();
+            var fontSize = this.generateRandomFontSize();
+            var fontWeight = this.generateRandomFontWeight();
             for (var sentence = 0; sentence < SENTENCES; sentence++) {
                 var words = [];
                 /** Randomly select WORDS words from the dictionary */
                 for (var j = 0; j < WORDS; j++) {
                     words.push(this.state.words[Math.round(random() * this.state.words.length)] || '');
                 }
-                var color = Math.floor(random() * 256);
-                var opacity = (line % (SKIP_LINE + SKIP_LINES) >= SKIP_LINE) ? 0 : 1;
-                sentences.push(React.createElement(sentence_1.Sentence, { color: "rgb(" + color + ", " + color + ", " + color + ")", horizontalOffset: HORIZONTAL_OFFSET, verticalOffset: VERTICAL_OFFSET, lineHeight: LINE_HEIGHT, opacity: opacity, fontSize: fontSizes[Math.floor(random() * fontSizes.length)], fontWeight: fontWeights[Math.floor(random() * fontWeights.length)] }, words.join(' ')));
+                if (!LINE_SAME_FONT) {
+                    color = this.generateRandomColor();
+                    fontSize = this.generateRandomFontSize();
+                    fontWeight = this.generateRandomFontWeight();
+                }
+                var opacity = (line % (KEEP_LINES + SKIP_LINES) >= KEEP_LINES) ? 0 : 1;
+                sentences.push(React.createElement(sentence_1.Sentence, { color: "rgb(" + color + ", " + color + ", " + color + ")", horizontalOffset: HORIZONTAL_OFFSET, verticalOffset: VERTICAL_OFFSET, lineHeight: LINE_HEIGHT, opacity: opacity, fontSize: fontSize, fontWeight: fontWeight }, words.join(' ')));
             }
-            sentences.push(React.createElement("br", null));
+            lineElements.push(React.createElement("div", { style: {
+                    position: 'absolute',
+                    top: line * LINE_HEIGHT
+                } }, sentences));
         }
-        return (React.createElement("div", { id: this.state.words.length > 0 ? "main" : undefined, style: {
-                height: '100%',
-                width: '100%',
-                cursor: 'pointer',
-                whiteSpace: 'nowrap',
-                backgroundImage: "url(\"" + imgSrc + "\")",
-                backgroundPosition: random() * 2000 + "px " + random() * 2000 + "px",
-                backgroundRepeat: 'repeat',
-                backgroundSize: '1679px 944px'
-            }, onClick: this.handleClick }, sentences));
+        var style = {
+            height: '100%',
+            width: '100%',
+            cursor: 'pointer',
+            whiteSpace: 'nowrap',
+            font: 'Open Sans'
+        };
+        if (MONOCROME_BACKGROUND) {
+            var color = Math.floor(255 - random() * 10);
+            style.backgroundColor = "rgb(" + color + ", " + color + ", " + color + ")";
+        }
+        else {
+            style.backgroundImage = "url(\"" + imgSrc + "\")";
+            style.backgroundPosition = random() * 2000 + "px " + random() * 2000 + "px";
+            style.backgroundRepeat = 'repeat';
+            style.backgroundSize = '1679px 944px';
+        }
+        return (React.createElement("div", { id: this.state.words.length > 0 ? "main" : undefined, style: style, onClick: this.handleClick }, lineElements));
     };
     return Main;
 }(React.Component));

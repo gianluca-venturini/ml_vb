@@ -5,7 +5,7 @@ import numpy
 import numpy as np
 from PIL import Image
 from sklearn.metrics import confusion_matrix
-from keras.layers import Dense, Flatten
+from keras.layers import Dense, Flatten, MaxPooling2D
 from keras.layers.convolutional import Conv2D
 from keras.models import Sequential
 import pickle
@@ -119,10 +119,23 @@ old_TPR = 0
 _k =0
 _j=0
 
-def get_convolution_model(layers, image_size):
+def get_text_model(layers, image_size):
     with tf.device('/gpu:0'):
         model = Sequential()
-        model.add(Conv2D(layers[0], input_shape=(image_size, image_size, 1), activation='relu', kernel_size=(5, 5)))
+        model.add(Conv2D(layers[0], input_shape=(image_size, image_size, 1), activation='relu', kernel_size=(3, 3)))
+        model.add(Flatten())
+        model.add(Dense(layers[1], init='uniform', activation='relu'))
+        model.add(Dense(layers[2], init='uniform', activation='relu'))
+        model.add(Dense(1, init='uniform', activation='sigmoid'))
+        # Compile model
+        model.compile(loss='binary_crossentropy', optimizer='adam', metrics=['accuracy'])
+        return model
+
+def get_text_overlap_model(layers, image_size):
+    with tf.device('/gpu:0'):
+        model = Sequential()
+        model.add(Conv2D(layers[0], input_shape=(image_size, image_size, 1), activation='relu', kernel_size=(3, 3)))
+        model.add(MaxPooling2D(pool_size=(2, 2), strides=None, padding='valid'))
         model.add(Flatten())
         model.add(Dense(layers[1], init='uniform', activation='relu'))
         model.add(Dense(layers[2], init='uniform', activation='relu'))
@@ -165,9 +178,12 @@ if __name__ == '__main__':
     parser.add_argument('--num_good_train_images', type=int, default=100, help='number of images to sample from the good dataset')
     parser.add_argument('--num_bug_train_images', type=int, default=100, help='number of images to sample from the bug dataset')
     parser.add_argument('--image_size', type=int, default=64, help='size of the input image width=height=image_size')
-    parser.add_argument('--dedup', type=bool, default=True, help='if True the good and bad sampled datasets are disjoint')
+    parser.add_argument('--dedup', type=bool, default=False, help='if True the good and bad sampled datasets are disjoint')
     parser.add_argument('--dataset_good_name', type=str, default='good', help='name of the directory that contains good images')
     parser.add_argument('--dataset_bug_name', type=str, default='bug', help='name of directory that contains bug images')
+    parser.add_argument('--epochs', type=int, default=15, help='number of training epochs')
+    parser.add_argument('--text_architecture', action='store_true', help='use if you want to use architecture optimized for text/no text')
+    parser.add_argument('--text_overlap_architecture', action='store_true', help='user if you want to use architecture optimized for text overlap')
     FLAGS, unparsed = parser.parse_known_args()
 
     numpy.random.seed()
@@ -182,7 +198,16 @@ if __name__ == '__main__':
     data_train = scale_data(data_train, scaler)
     data_test = scale_data(data_test, scaler)
     save_scaler(KERAS_MODEL_PATH + FLAGS.model_name + '.pickle', scaler)
-    model = get_convolution_model(layers=[64, 32, 16], image_size=FLAGS.image_size)
-    ACC, TPR, TNR = train(model, epochs=15)
+    model = None
+    if FLAGS.text_architecture:
+        print 'Using text architecture'
+        model = get_text_model(layers=[25, 25, 10], image_size=FLAGS.image_size)
+    if FLAGS.text_overlap_architecture:
+        print 'Using text architecture'
+        model = get_text_overlap_model(layers=[25, 25, 10], image_size=FLAGS.image_size)
+    if model is None:
+        print 'select a model between --text_architecture and --text_overlap_architecture'
+        exit(0)
+    ACC, TPR, TNR = train(model, epochs=FLAGS.epochs)
     model.save(KERAS_MODEL_PATH + FLAGS.model_name + ".h5")
     print_statistics(ACC, TPR, TNR)
