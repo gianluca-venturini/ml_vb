@@ -14,10 +14,10 @@ path = '/Users/ran/Documents/ML_bad_lf/indent/'
 scaler_path = path+"scaler"
 keras_model_path = path+"model"
 
-sort = ['indent', 'indent-bad']
+sort = ['good-tuple', 'bad-tuple']
 
-sample_size = [6, 6]
-input = 1100
+sample_size = [6, 9]
+input = 300
 
 
 def preprocess_data(X_user_train,  X_test):
@@ -30,24 +30,25 @@ def preprocess_data(X_user_train,  X_test):
 
     return  scaler.transform(X_user_train).tolist(),  scaler.transform(X_test).tolist()
 
-def get_lines(arr_tup):
-    arr = []
-    for c, b  in arr_tup:
-        arr.append(c)
-        arr.append(b)
-        s = len(arr)
-        second = s % 4 == 0
-        if second and arr[-4]==c:
-            if (b-arr[-3])<50:
-                del arr[-1]
-                del arr[-1]
-                del arr[-1]
-                del arr[-1]
 
-    return arr
+def rand_d(tup, x):
+    tups  = []
+    #     d games
+    for i in range(x):
+        tups.append([(a,b,d+random.randint(-3,4)) for a, b, d in tup])
+    return tups
+
+def shift_a(tup, x):
+    tups = []
+    #     d games
+    for i in range(x):
+    # shift x
+        shift= random.randint(-3,4)
+        tups.append([(a+shift, b, d ) for a, b, d in tup])
+    return tups
 
 # preparing photo windows from given photos
-def add_pcs(dedup=True):
+def add_pcs():
     a = []
     s = set()
     for i in [0, 1]:
@@ -57,30 +58,23 @@ def add_pcs(dedup=True):
         listing = random.sample(os.listdir(path + sort[i]), sample_size[i])
         for photo in listing:
             try:
-                # img = Image.open(path + sort[i] + '/' + photo).convert('L')
-                # arr = np.array(img).ravel()
                 with open(path + sort[i] + '/' + photo, "rb") as f:
                     arr_tup = pickle.load(f)
-                arr = get_lines(arr_tup)
-                print "odododododo"
-                print (input - len(arr))
-                print "odododododo"
-                if len(arr)==0:
-                    continue
-                zeros = [0] * (input - len(arr))
-                arr.extend(zeros)
-                if dedup:
-                    if hash(str(arr)) in s:
-                        continue
-                    s.add(hash(str(arr)))
-                a.append([arr, i])
+                tups = []
+                tups.extend(shift_a(arr_tup, 15))
+                tups.extend(rand_d(arr_tup, 15))
+                for tup in tups:
+                    arr = list(itertools.chain(*tup))
+                    zeros = [0] * (input - len(arr))
+                    arr.extend(zeros)
+                    a.append([arr, i])
             except Exception as e:
                 print e
     print a
     return a
 
 
-x_y = add_pcs(dedup=False)
+x_y = add_pcs()
 print len(x_y)
 print "=============================="
 numpy.random.seed()
@@ -153,7 +147,7 @@ def train(j,k, epochs=50):
     [ACC, TPR, TNR] = compute_TPR_TNR(l_v, rounded)
 
 
-train(800,10,epochs=2)
+train(800,10,epochs=1000)
 
 model.save(keras_model_path+sort[1]+".h5")
 
